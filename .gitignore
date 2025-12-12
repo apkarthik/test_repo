@@ -32,6 +32,11 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Android local properties
+/android/local.properties
+/android/.gradle/
+/android/gradle/wrapper/gradle-wrapper.jar
+
 # Symbolication related
 app.*.symbols
 

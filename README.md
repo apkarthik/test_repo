@@ -70,36 +70,57 @@ AutocompleteDropdown(
 
 The app includes an example page (`AutocompleteExamplePage`) that demonstrates the widget with a list of fruits. Type 3 or more characters to see suggestions appear.
 
-## Building APK for Testing
+## Building Optimized APK
 
-### Manual Build via GitHub Actions
+### APK Size Optimization
 
-This repository includes a GitHub Actions workflow to build a debug APK:
+This project is configured with several optimizations to minimize APK size:
+
+- **Code Shrinking**: ProGuard/R8 minification removes unused code
+- **Resource Shrinking**: Removes unused resources from the APK
+- **ABI Splits**: Separate APKs for each CPU architecture (arm64-v8a, armeabi-v7a, x86_64)
+- **Optimized Gradle Settings**: Efficient heap allocation for faster builds
+
+These optimizations can reduce APK size by 30-50% compared to unoptimized builds.
+
+### Build via GitHub Actions
+
+This repository includes a GitHub Actions workflow to build optimized release APKs:
 
 1. Go to the **Actions** tab in GitHub
-2. Select **Build Debug APK** workflow from the left sidebar
+2. Select **Build Optimized APK** workflow from the left sidebar
 3. Click **Run workflow** button
 4. Select the branch and click **Run workflow**
-5. Once complete, download the APK from the workflow artifacts
+5. Once complete, download your preferred APK from the workflow artifacts:
+   - `release-apk-arm64-v8a`: For modern 64-bit ARM devices (smallest, ~10-15MB)
+   - `release-apk-armeabi-v7a`: For older 32-bit ARM devices
+   - `release-apk-x86_64`: For x86_64 devices (emulators)
+   - `release-apk-universal`: Works on all architectures (larger size)
 
 The workflow will:
 - Set up Flutter and Java environments
-- Create the Android project structure if needed
-- Build a debug APK with default debug signature
-- Upload the APK as an artifact (retained for 30 days)
+- Build release APKs with code shrinking and resource optimization
+- Generate split APKs per CPU architecture for minimal size
+- Upload all APK variants as artifacts (retained for 30 days)
 
 ### Local Build
 
-To build the APK locally:
+To build optimized APKs locally:
 
 ```bash
-# First, create Android project structure if needed
-flutter create . --platforms=android
+# Build release APK with all optimizations
+flutter build apk --release --split-per-abi
 
-# Build debug APK
-flutter build apk --debug
-
-# The APK will be at: build/app/outputs/flutter-apk/app-debug.apk
+# APKs will be at:
+# - build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+# - build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+# - build/app/outputs/flutter-apk/app-x86_64-release.apk
+# - build/app/outputs/flutter-apk/app-release.apk (universal)
 ```
 
-**Note**: The debug APK uses Flutter's default debug signing key and is for testing purposes only. Do not distribute debug builds in production.
+**Size Comparison** (approximate):
+- Debug APK: ~40-50MB
+- Release APK (universal): ~15-20MB
+- Release APK (per-ABI split): ~10-15MB each
+
+**Note**: Release APKs use a debug signing key for testing. For production distribution, configure proper release signing in `android/app/build.gradle`.
