@@ -54,12 +54,16 @@ android {
         }
     }
 
+    // NOTE: Debug keystore configuration below is for TESTING ONLY
+    // For production releases, configure proper release signing with your own keystore
     def debugKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
     def debugKeystorePassword = System.getenv("ANDROID_DEBUG_KEYSTORE_PASSWORD") ?: "android"
     def debugKeyAlias = System.getenv("ANDROID_DEBUG_KEY_ALIAS") ?: "androiddebugkey"
     def debugKeyPassword = System.getenv("ANDROID_DEBUG_KEY_PASSWORD") ?: debugKeystorePassword
     if (!debugKeystore.exists()) {
-        debugKeystore.parentFile.mkdirs()
+        if (!debugKeystore.parentFile.mkdirs() && !debugKeystore.parentFile.exists()) {
+            throw new GradleException("Failed to create directory for debug keystore")
+        }
         def keytoolCmd = [
                 "keytool", "-genkeypair", "-v",
                 "-keystore", debugKeystore.absolutePath,
