@@ -1,0 +1,55 @@
+name: Build Debug APK
+
+on:
+  workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.16.0'
+          channel: 'stable'
+      
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Create Android project structure
+        run: |
+          # Create Android project if it doesn't exist
+          if [ ! -d "android" ]; then
+            flutter create . --platforms=android
+          fi
+      
+      - name: Build debug APK
+        run: flutter build apk --debug
+      
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 30
+      
+      - name: Upload build info
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-info
+          path: |
+            build/app/outputs/flutter-apk/*.sha1
+            build/app/outputs/flutter-apk/*.json
+          if-no-files-found: ignore
+          retention-days: 7
