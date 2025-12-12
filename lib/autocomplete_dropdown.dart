@@ -30,6 +30,7 @@ class _AutocompleteDropdownState extends State<AutocompleteDropdown> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final LayerLink _layerLink = LayerLink();
+  final GlobalKey _textFieldKey = GlobalKey();
 
   OverlayEntry? _overlayEntry;
   List<String> _suggestions = [];
@@ -59,6 +60,7 @@ class _AutocompleteDropdownState extends State<AutocompleteDropdown> {
 
   void _onChanged(String value) {
     _debounce?.cancel();
+    setState(() {}); // Trigger rebuild to update clear button visibility
     _debounce = Timer(_debounceDuration, () async {
       final q = value.trim();
       if (q.length >= _minChars) {
@@ -92,8 +94,9 @@ class _AutocompleteDropdownState extends State<AutocompleteDropdown> {
 
   OverlayEntry _createOverlayEntry() {
     return OverlayEntry(builder: (context) {
-      // Find width of the field
-      RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+      // Find width of the field using the stored key
+      RenderBox? renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
+      final width = renderBox?.size.width ?? 300.0;
       return Positioned(
         // Use CompositedTransformFollower for accurate placement
         child: CompositedTransformFollower(
@@ -106,8 +109,8 @@ class _AutocompleteDropdownState extends State<AutocompleteDropdown> {
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 maxHeight: 240,
-                minWidth: (renderBox?.size.width ?? MediaQuery.of(context).size.width * 0.5),
-                maxWidth: (renderBox?.size.width ?? MediaQuery.of(context).size.width * 0.95),
+                minWidth: width,
+                maxWidth: width,
               ),
               child: _suggestions.isEmpty
                   ? const SizedBox.shrink()
@@ -152,6 +155,7 @@ class _AutocompleteDropdownState extends State<AutocompleteDropdown> {
     return CompositedTransformTarget(
       link: _layerLink,
       child: TextField(
+        key: _textFieldKey,
         controller: _controller,
         focusNode: _focusNode,
         decoration: InputDecoration(
@@ -176,10 +180,10 @@ class _AutocompleteDropdownState extends State<AutocompleteDropdown> {
 
 /// Example usage: a small page demonstrating the widget
 class AutocompleteExamplePage extends StatelessWidget {
-  AutocompleteExamplePage({Key? key}) : super(key: key);
+  const AutocompleteExamplePage({Key? key}) : super(key: key);
 
   // Example local data source (could be remote)
-  final List<String> _allItems = [
+  final List<String> _allItems = const [
     'apple', 'apricot', 'banana', 'blackberry', 'blueberry', 'cantaloupe', 'cherry',
     'date', 'dragonfruit', 'fig', 'grape', 'grapefruit', 'kiwi', 'lemon', 'lime',
     'mango', 'nectarine', 'orange', 'papaya', 'peach', 'pear', 'pineapple', 'plum',
