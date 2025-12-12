@@ -95,8 +95,8 @@ class _AutocompleteDropdownState extends State<AutocompleteDropdown> {
   OverlayEntry _createOverlayEntry() {
     return OverlayEntry(builder: (context) {
       // Find width of the field using the stored key
-      RenderBox? renderBox = _textFieldKey.currentContext?.findRenderObject() as RenderBox?;
-      final width = renderBox?.size.width ?? 300.0;
+      final renderObject = _textFieldKey.currentContext?.findRenderObject();
+      final width = (renderObject is RenderBox) ? renderObject.size.width : 300.0;
       return Positioned(
         // Use CompositedTransformFollower for accurate placement
         child: CompositedTransformFollower(
