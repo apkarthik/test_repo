@@ -1,11 +1,11 @@
-name: Build Debug APK
+name: Build Optimized APK
 
 on:
   workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build Optimized Release APK
     runs-on: ubuntu-latest
     
     permissions:
@@ -29,22 +29,41 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
       
-      - name: Create Android project structure
+      - name: Build release APK with optimizations
         run: |
-          # Create Android project if it doesn't exist
-          if [ ! -d "android" ]; then
-            flutter create . --platforms=android
-          fi
+          # Build release APK with code shrinking and resource optimization
+          flutter build apk --release --split-per-abi
       
-      - name: Build debug APK
-        run: flutter build apk --debug
-      
-      - name: Upload APK artifact
+      - name: Upload Universal APK
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: release-apk-universal
+          path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
+      
+      - name: Upload ARM64 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk-arm64-v8a
+          path: build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          retention-days: 30
+          if-no-files-found: ignore
+      
+      - name: Upload ARMv7 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk-armeabi-v7a
+          path: build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+          retention-days: 30
+          if-no-files-found: ignore
+      
+      - name: Upload x86_64 APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk-x86_64
+          path: build/app/outputs/flutter-apk/app-x86_64-release.apk
+          retention-days: 30
+          if-no-files-found: ignore
       
       - name: Upload build info
         uses: actions/upload-artifact@v4

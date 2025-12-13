@@ -1,0 +1,137 @@
+import java.util.concurrent.TimeUnit
+
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+android {
+    namespace "com.autocomplete.dropdown"
+    compileSdk 34
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        applicationId "com.autocomplete.dropdown"
+        minSdk 21
+        targetSdk 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        
+        // Enable ABI splits for smaller APKs
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+        }
+    }
+
+    // NOTE: Debug keystore configuration below is for TESTING ONLY
+    // For production releases, configure proper release signing with your own keystore
+    def debugKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
+    def debugKeystorePassword = System.getenv("ANDROID_DEBUG_KEYSTORE_PASSWORD") ?: "android"
+    def debugKeyAlias = System.getenv("ANDROID_DEBUG_KEY_ALIAS") ?: "androiddebugkey"
+    def debugKeyPassword = System.getenv("ANDROID_DEBUG_KEY_PASSWORD") ?: debugKeystorePassword
+    if (!debugKeystore.exists()) {
+        if (!debugKeystore.parentFile.mkdirs() && !debugKeystore.parentFile.exists()) {
+            throw new GradleException("Failed to create directory for debug keystore")
+        }
+        def keytoolCmd = [
+                "keytool", "-genkeypair", "-v",
+                "-keystore", debugKeystore.absolutePath,
+                "-storepass", debugKeystorePassword,
+                "-alias", debugKeyAlias,
+                "-keypass", debugKeyPassword,
+                "-keyalg", "RSA",
+                "-keysize", "2048",
+                "-dname", "CN=Android Debug,O=Android,C=US",
+                "-validity", "10000",
+                "-storetype", "JKS"
+        ]
+        try {
+            def process = keytoolCmd.execute()
+            def stdout = new StringBuffer()
+            def stderr = new StringBuffer()
+            process.consumeProcessOutput(stdout, stderr)
+            if (!process.waitFor(30, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+                throw new GradleException("keytool generation timed out after 30 seconds")
+            }
+            if (process.exitValue() != 0) {
+                throw new GradleException("Failed to generate debug keystore (exit ${process.exitValue()}): ${stderr.toString().trim()}")
+            }
+        } catch (IOException e) {
+            throw new GradleException("keytool not found. Ensure JDK is installed and keytool is on PATH. Details: ${e.message}", e)
+        }
+    }
+
+    signingConfigs {
+        release {
+            storeFile debugKeystore
+            storePassword debugKeystorePassword
+            keyAlias debugKeyAlias
+            keyPassword debugKeyPassword
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            // Enable code shrinking, obfuscation, and optimization
+            minifyEnabled true
+            // Enable resource shrinking
+            shrinkResources true
+            // Use ProGuard rules
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            // Keep debug builds unoptimized for faster builds
+            minifyEnabled false
+            shrinkResources false
+        }
+    }
+    
+    // Split APKs by ABI for smaller downloads
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+            universalApk true
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {}
